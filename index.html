@@ -1,1 +1,63 @@
 
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AnaToLi-Manev | Галерия</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101114;color:white;font-family:Arial,sans-serif}
+header{padding:25px 7%;border-bottom:1px solid #333;letter-spacing:3px}
+header span{color:#d7b778}
+.hero{padding:80px 8% 45px}
+small{color:#d7b778;letter-spacing:3px}
+h1{font-size:clamp(40px,8vw,75px);margin:20px 0}
+p{color:#aaa;line-height:1.7}
+button{background:#d7b778;color:#111;border:0;padding:14px 22px;border-radius:25px;font-weight:bold}
+main{padding:25px 7% 80px}
+#gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.item{background:#222;border-radius:12px;overflow:hidden}
+.item img,.item video{width:100%;display:block}
+.name{padding:12px}
+footer{text-align:center;padding:25px;color:#888;border-top:1px solid #333}
+input{display:none}
+</style>
+</head>
+<body>
+<header>ANATOLI<span> • </span>MANEV</header>
+<section class="hero">
+<small>PERSONAL PHOTO & VIDEO GALLERY</small>
+<h1>Моменти, които остават.</h1>
+<p>Добре дошли в моята публична дигитална галерия.</p>
+<button onclick="document.getElementById('files').click()">＋ Добави снимки и видео</button>
+<input id="files" type="file" accept="image/*,video/*" multiple>
+</section>
+<main>
+<h2>Моята галерия</h2>
+<div id="gallery"><p>Очаквайте скоро снимки и видеоклипове.</p></div>
+</main>
+<footer>© 2026 Anatoli Manev</footer>
+<script>
+const picker=document.getElementById('files');
+const gallery=document.getElementById('gallery');
+picker.addEventListener('change',()=>{
+gallery.innerHTML='';
+for(const file of picker.files){
+if(!file.type.startsWith('image/')&&!file.type.startsWith('video/'))continue;
+const item=document.createElement('div');
+item.className='item';
+const media=document.createElement(file.type.startsWith('video/')?'video':'img');
+media.src=URL.createObjectURL(file);
+if(media.tagName==='VIDEO')media.controls=true;
+const name=document.createElement('div');
+name.className='name';
+name.textContent=file.name;
+item.append(media,name);
+gallery.append(item);
+}
+});
+</script>
+</body>
+</html>
+
