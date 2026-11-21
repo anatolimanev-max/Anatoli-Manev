@@ -221,7 +221,22 @@ async function loadGallery(){
  }
 
 }
-
+document.getElementById("forgotBtn").addEventListener("click",async()=>{
+ const email=document.getElementById("email").value.trim();
+ if(!email){
+  message("Първо въведи имейла си.");
+  return;
+ }
+ message("Изпращане на линк...");
+ const {error}=await db.auth.resetPasswordForEmail(email,{
+  redirectTo:window.location.origin+window.location.pathname
+ });
+ if(error){
+  message("Грешка: "+error.message);
+ }else{
+  message("Провери имейла си за линк за възстановяване.");
+ }
+});
 loginForm.addEventListener("submit",async(e)=>{
 
  e.preventDefault();
