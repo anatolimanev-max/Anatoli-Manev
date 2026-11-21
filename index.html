@@ -40,9 +40,9 @@ input{display:block;width:100%;max-width:350px;padding:13px;margin:10px 0;border
 
 #gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
 
-.item{background:#222;border-radius:12px;overflow:hidden}
+.item{background:#222;border-radius:12px;overflow:hidden;min-width:0}
 
-.item img,.item video{width:100%;display:block}
+.item img,.item video{width:100%;height:auto;display:block;object-fit:contain}
 
 .name{padding:12px;overflow-wrap:anywhere}
 
@@ -51,6 +51,8 @@ input{display:block;width:100%;max-width:350px;padding:13px;margin:10px 0;border
 #admin{background:#1b1c20;padding:20px;border-radius:12px;max-width:420px;margin:20px 0}
 
 footer{text-align:center;padding:25px;color:#888;border-top:1px solid #333}
+
+[hidden]{display:none!important}
 
 </style>
 
@@ -136,6 +138,8 @@ const BUCKET="anatoli-photos";
 
 const FOLDER="";
 
+const ADMIN_ID="f16c3952-18a8-434c-a672-dc3db19916e9";
+
 const db=window.supabase.createClient(PROJECT_URL,PUBLISHABLE_KEY);
 
 const loginForm=document.getElementById("loginForm");
@@ -160,9 +164,13 @@ function message(text){
 
 function isAdmin(session){
 
-  return !!session &&
+  return !!session && session.user.id===ADMIN_ID;
 
-    session.user.id==="f16c3952-18a8-434c-a672-dc3db19916e9";
+}
+
+function filePath(name){
+
+  return FOLDER ? FOLDER+"/"+name : name;
 
 }
 
@@ -204,21 +212,17 @@ async function loadGallery(){
 
   gallery.replaceChildren();
 
-  const {data,error}=await db.storage
+  const {data,error}=await db.storage.from(BUCKET).list(FOLDER,{
 
-    .from(BUCKET)
+    limit:100,
 
-    .list(FOLDER,{
+    sortBy:{column:"created_at",order:"desc"}
 
-      limit:100,
-
-      sortBy:{column:"created_at",order:"desc"}
-
-    });
+  });
 
   if(error){
 
-    gallery.textContent="Не успяхме да заредим галерията.";
+    gallery.textContent="Не успяхме да заредим галерията: "+error.message;
 
     return;
 
@@ -240,7 +244,7 @@ async function loadGallery(){
 
   for(const file of files){
 
-    const fullPath=FOLDER+"/"+file.name;
+    const fullPath=filePath(file.name);
 
     const url=db.storage.from(BUCKET).getPublicUrl(fullPath).data.publicUrl;
 
@@ -260,11 +264,25 @@ async function loadGallery(){
 
       media.controls=true;
 
+      media.preload="metadata";
+
     }else{
 
       media.loading="lazy";
 
+      media.alt=file.name;
+
     }
+
+    media.onerror=()=>{
+
+      const errorText=document.createElement("p");
+
+      errorText.textContent="Файлът не може да се зареди: "+file.name;
+
+      item.append(errorText);
+
+    };
 
     const name=document.createElement("div");
 
@@ -378,7 +396,7 @@ resetForm.addEventListener("submit",async(e)=>{
 
   const password=document.getElementById("newPassword").value;
 
-  const confirm=document.getElementById("confirmPassword").value;
+  const confirmPassword=document.getElementById("confirmPassword").value;
 
   if(password.length<8){
 
@@ -388,7 +406,7 @@ resetForm.addEventListener("submit",async(e)=>{
 
   }
 
-  if(password!==confirm){
+  if(password!==confirmPassword){
 
     message("Паролите не съвпадат.");
 
@@ -398,7 +416,7 @@ resetForm.addEventListener("submit",async(e)=>{
 
   message("Запазване на новата парола...");
 
-  const {error}=await db.auth.updateUser({password:password});
+  const {error}=await db.auth.updateUser({password});
 
   if(error){
 
@@ -464,9 +482,7 @@ picker.addEventListener("change",async()=>{
 
     const safeName=file.name.replace(/[^a-zA-Z0-9._-]+/g,"-");
 
-    const path=FOLDER+"/"+Date.now()+"-"+
-
-      Math.random().toString(36).slice(2)+"-"+safeName;
+    const path=filePath(Date.now()+"-"+Math.random().toString(36).slice(2)+"-"+safeName);
 
     message("Качване: "+file.name);
 
@@ -519,8 +535,6 @@ db.auth.getSession().then(({data})=>{
   loadGallery();
 
 });
-
-loadGallery();
 
 </script>
 
